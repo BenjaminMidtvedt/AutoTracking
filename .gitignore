@@ -1,0 +1,5 @@
+.vscode
+.vs
+.pyc
+/checkpoints
+*/__pycache__

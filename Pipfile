@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+tqdm = "*"
+opencv-python = "*"
+numpy = "*"
+deeptrack = "==1.0.0.a4"
+matplotlib = "*"
+ipykernel = "*"
+flake8 = "*"
+pandas = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"
