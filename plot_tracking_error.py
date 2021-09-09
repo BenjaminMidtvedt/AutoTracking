@@ -19,7 +19,7 @@ parser.add_argument("dataset", metavar="d", type=str)
 parser.add_argument("models", metavar="m", type=str)
 parser.add_argument("--maxdt", dest="maxdt", type=int, default=100)
 
-extra_methods = [autotracker.radialcenter]
+extra_methods = [autotracker.radialcenter, autotracker.centroid]
 
 
 def main():
@@ -32,6 +32,26 @@ def main():
     )
     plt.figure(figsize=(10, 10))
     all_models = glob.glob(args.models)
+
+    comp_error = []
+    for comparison_method in extra_methods:
+        start = time.time()
+        predictions = comparison_method(frames)
+        eval_time = time.time() - start
+        
+
+        print(
+            f"Evaluated {comparison_method.__name__} on {frames.shape[0]} images in \t {eval_time:.3f}s"
+        )
+
+        x_err = labels["x"].to_numpy() - predictions[:, 0]
+        x_err = np.abs(x_err - np.mean(x_err))
+        y_err = labels["y"].to_numpy() - predictions[:, 1]
+        y_err = np.abs(y_err- np.mean(y_err))
+
+        error = (x_err + y_err) / 2
+        comp_error.append(error)
+
     for model_path in all_models:
         _, model_name = os.path.split(model_path)
 
@@ -45,9 +65,9 @@ def main():
         )
 
         x_err = labels["x"].to_numpy() - predictions[:, 1]
-        x_err = np.abs(x_err - np.mean(x_err))
-        y_err = np.abs(labels["y"].to_numpy() - predictions[:, 0])
-        y_err = np.abs(y_err - np.mean(y_err))
+        x_err = np.abs(x_err - np.abs(x_err))
+        y_err = labels["y"].to_numpy() - predictions[:, 0]
+        y_err = np.abs(y_err - np.abs(y_err))
 
         error = (x_err + y_err) / 2
 
@@ -58,25 +78,12 @@ def main():
         
         
 
-        for comparison_method in extra_methods:
-            start = time.time()
-            predictions = comparison_method(frames)
-            eval_time = time.time() - start
-            
-
-            print(
-                f"Evaluated {comparison_method.__name__} on {frames.shape[0]} images in \t {eval_time:.3f}s"
-            )
-
-            error = (
-                np.abs(labels["x"].to_numpy() - predictions[:, 0]) + 
-                np.abs(labels["y"].to_numpy() - predictions[:, 1])
-            ) / 2
-            autotracker.binned_error(variable, error, 10, c="gray")
+        for error in comp_error:
+            autotracker.binned_error(variable, error, 10)
 
         plt.xlabel("SNR")
         plt.ylabel("Absolute error (px)")
-        plt.legend(all_models + [f.__name__ for f in extra_methods])
+        plt.legend([model_path] + [f.__name__ for f in extra_methods])
         os.makedirs("figures", exist_ok=True)
         plt.savefig(f"figures/{model_name}_tracking_error.png", dpi=300)
         plt.close()
