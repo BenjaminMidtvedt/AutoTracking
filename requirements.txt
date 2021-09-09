@@ -1,0 +1,8 @@
+tqdm
+opencv-python
+numpy
+deeptrack==1.0.0.a7
+matplotlib
+ipykernel
+flake8
+pandas

@@ -5,10 +5,14 @@ import numpy as np
 import tensorflow as tf
 import deeptrack as dt
 from tqdm import tqdm
-
+import glob
+import pandas as pd
 
 def load(filename: str):
     *_, ext = filename.split(os.path.extsep)
+
+    if os.path.isdir(filename):
+        return load_dir(filename)
 
     if ext == "py":
         return load_python(filename)
@@ -39,6 +43,22 @@ def load_video(filename):
 
     return frames
 
+def load_dir(filename):
+    npys = glob.glob(os.path.join(filename, "*.npy"))
+    csvs = glob.glob(os.path.join(filename, "*.csv"))
+
+    npy_files = [np.load(f) for f in npys]
+    csv_files = [pd.read_csv(f) for f in csvs]
+
+
+    npy_files = np.stack(npy_files, axis=0)
+    
+    csv_files = pd.concat(csv_files)
+    # csv_files = np.stack(csv_files, axis=0)
+    
+    npy_files = np.reshape(npy_files, (-1, *npy_files.shape[-3:]))
+    
+    return npy_files, csv_files
 
 def load_image(filename):
     pass

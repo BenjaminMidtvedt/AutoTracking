@@ -1,3 +1,4 @@
+#test
 import argparse
 import autotracker
 import matplotlib.pyplot as plt
@@ -21,25 +22,27 @@ parser.add_argument("--sigma", dest="sigma", type=int, default=0.01)
 def main():
     args = parser.parse_args()
 
-    frames = autotracker.load(args.filename)
+    frames, _ = autotracker.load(args.filename)
 
     training_set = eval(f"frames[{args.train_frames}]")
+    plt.imshow(training_set[0])
+    plt.savefig("trainim.png")
+    # print(training_set.shape)
 
-    dataloader = autotracker.dataloader(training_set) >> dt.Gaussian(sigma=args.sigma)
+    dataloader = autotracker.dataloader(training_set)
     model = autotracker.single_particle_model(
-        input_shape=frames.shape[1:], loss=args.lossfn
+        input_shape=frames.shape[1:], loss=args.lossfn,
     )
 
-    # generator = model.data_generator(dataloader, batch_size=args.batch_size)
-    # with generator:
 
+    
     model.fit(
         dataloader,
         epochs=args.epochs,
         batch_size=args.batch_size,
         generator_kwargs={"radius": args.radius, "rotate": args.rotate},
     )
-
+    
     autotracker.save(model, args)
 
 
